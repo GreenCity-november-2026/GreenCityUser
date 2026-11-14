@@ -23,6 +23,7 @@ import greencity.enums.EmailNotification;
 import greencity.enums.Role;
 import greencity.repository.UserRepo;
 import greencity.service.UserService;
+
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,6 +58,7 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -288,13 +290,18 @@ class UserControllerTest {
 
     @Test
     void deleteUserProfilePictureTest() throws Exception {
+        UserVO userVO = ModelUtils.getUserVO();
+        userVO.setEmail("test@email.com");
+
         Principal principal = mock(Principal.class);
         when(principal.getName()).thenReturn("test@email.com");
+        when(userService.findByEmail("test@email.com")).thenReturn(userVO);
+
         mockMvc.perform(patch(userLink + "/deleteProfilePicture")
             .principal(principal))
             .andExpect(status().isOk());
 
-        verify(userService, times(1)).deleteUserProfilePicture("test@email.com");
+        verify(userService, times(1)).deleteUserProfilePicture(userVO.getEmail());
     }
 
     @Test
