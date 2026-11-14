@@ -68,11 +68,11 @@ public class UserController {
     })
     @PatchMapping("status")
     public ResponseEntity<UserStatusDto> updateStatus(
-        @Valid @RequestBody UserStatusDto userStatusDto, @ApiIgnore Principal principal) {
+        @Valid @RequestBody UserStatusDto userStatusDto, @ApiIgnore @CurrentUser UserVO userVO) {
         return ResponseEntity.status(HttpStatus.OK)
             .body(
                 userService.updateStatus(
-                    userStatusDto.getId(), userStatusDto.getUserStatus(), principal.getName()));
+                    userStatusDto.getId(), userStatusDto.getUserStatus(), userVO.getEmail()));
     }
 
     /**
