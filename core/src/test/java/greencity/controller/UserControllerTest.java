@@ -90,8 +90,12 @@ class UserControllerTest {
 
     @Test
     void updateStatusTest() throws Exception {
+        UserVO userVO = ModelUtils.getUserVO();
+        userVO.setEmail("testmail@gmail.com");
+
         Principal principal = mock(Principal.class);
         when(principal.getName()).thenReturn("testmail@gmail.com");
+        when(userService.findByEmail("testmail@gmail.com")).thenReturn(userVO);
 
         String content = "{\n"
             + "  \"id\": 0,\n"
@@ -109,7 +113,7 @@ class UserControllerTest {
             mapper.readValue(content, UserStatusDto.class);
 
         verify(userService).updateStatus(userStatusDto.getId(),
-            userStatusDto.getUserStatus(), "testmail@gmail.com");
+            userStatusDto.getUserStatus(), userVO.getEmail());
     }
 
     @Test
