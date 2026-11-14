@@ -165,10 +165,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT,
                     "/ownSecurity/changePassword",
                     "/user/profile",
-                    "/user/{id}/updateUserLastActivityTime/{date}",
+                    "/user/updateUserLastActivityTime/{date}",
                     "/user/language/{languageId}",
                     "/user/employee-email")
-                .hasAnyRole(USER, ADMIN, UBS_EMPLOYEE, MODERATOR, EMPLOYEE)
+                .hasAnyRole(ADMIN, UBS_EMPLOYEE, MODERATOR, EMPLOYEE)
                 .requestMatchers(HttpMethod.PUT,
                     "/user/edit-authorities",
                     "/user/authorities",
