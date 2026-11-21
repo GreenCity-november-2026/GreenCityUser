@@ -312,7 +312,7 @@ public class UserController {
     })
     @PatchMapping(path = "/deleteProfilePicture")
     public ResponseEntity<HttpStatus> deleteUserProfilePicture(
-        @CurrentUser UserVO userVO) {
+        @ApiIgnore @CurrentUser UserVO userVO) {
         String email = userVO.getEmail();
         userService.deleteUserProfilePicture(email);
         return ResponseEntity.status(HttpStatus.OK).build();
