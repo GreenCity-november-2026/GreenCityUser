@@ -1,5 +1,6 @@
 package greencity.security.service;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import greencity.constant.AppConstant;
 import greencity.constant.ErrorMessage;
 import greencity.dto.user.UserAdminRegistrationDto;
@@ -13,16 +14,7 @@ import greencity.entity.VerifyEmail;
 import greencity.enums.EmailNotification;
 import greencity.enums.Role;
 import greencity.enums.UserStatus;
-import greencity.exception.exceptions.BadRefreshTokenException;
-import greencity.exception.exceptions.BadUserStatusException;
-import greencity.exception.exceptions.EmailNotVerified;
-import greencity.exception.exceptions.PasswordsDoNotMatchesException;
-import greencity.exception.exceptions.UserAlreadyHasPasswordException;
-import greencity.exception.exceptions.UserAlreadyRegisteredException;
-import greencity.exception.exceptions.UserBlockedException;
-import greencity.exception.exceptions.UserDeactivatedException;
-import greencity.exception.exceptions.WrongEmailException;
-import greencity.exception.exceptions.WrongPasswordException;
+import greencity.exception.exceptions.*;
 import greencity.repository.UserRepo;
 import greencity.security.dto.AccessRefreshTokensDto;
 import greencity.security.dto.SuccessSignInDto;
@@ -53,6 +45,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import greencity.exception.exceptions.BadRequestException;
+import java.util.Optional;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 
 /**
  * {@inheritDoc}
@@ -71,6 +66,7 @@ public class OwnSecurityServiceImpl implements OwnSecurityService {
     private static final String VALID_PW_CHARS =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+{}[]|:;<>?,./";
     private final EmailService emailService;
+    private final GoogleIdTokenVerifier googleIdTokenVerifier;
 
     /**
      * Constructor.
@@ -84,7 +80,8 @@ public class OwnSecurityServiceImpl implements OwnSecurityService {
         RestorePasswordEmailRepo restorePasswordEmailRepo,
         ModelMapper modelMapper,
         UserRepo userRepo,
-        EmailService emailService) {
+        EmailService emailService,
+        GoogleIdTokenVerifier googleIdTokenVerifier) {
         this.ownSecurityRepo = ownSecurityRepo;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
@@ -94,6 +91,7 @@ public class OwnSecurityServiceImpl implements OwnSecurityService {
         this.modelMapper = modelMapper;
         this.userRepo = userRepo;
         this.emailService = emailService;
+        this.googleIdTokenVerifier = googleIdTokenVerifier;
     }
 
     /**
@@ -427,5 +425,54 @@ public class OwnSecurityServiceImpl implements OwnSecurityService {
             .user(user)
             .build());
         userRepo.save(user);
+    }
+
+    @Override
+    @Transactional
+    public SuccessSignInDto signInWithGoogle(String googleToken) {
+        try {
+            GoogleIdToken idToken = googleIdTokenVerifier.verify(googleToken);
+            if (idToken == null) {
+                throw new BadRequestException("Invalid Google token");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            String email = payload.getEmail();
+            String firstName = (String) payload.get("given_name");
+
+            Optional<User> existingUser = userRepo.findByEmail(email);
+
+            User user;
+            if (existingUser.isPresent()) {
+                user = existingUser.get();
+            } else {
+                user = User.builder()
+                    .email(email)
+                    .name(firstName != null ? firstName : email)
+                    .firstName(firstName)
+                    .role(Role.ROLE_USER)
+                    .userStatus(UserStatus.ACTIVATED)
+                    .dateOfRegistration(LocalDateTime.now())
+                    .lastActivityTime(LocalDateTime.now())
+                    .refreshTokenKey(jwtTool.generateTokenKey())
+                    .emailNotification(EmailNotification.DISABLED)
+                    .rating(AppConstant.DEFAULT_RATING)
+                    .build();
+                userRepo.save(user);
+            }
+
+            String accessToken = jwtTool.createAccessToken(user.getEmail(), user.getRole());
+            String refreshToken = jwtTool.createRefreshToken(modelMapper.map(user, UserVO.class));
+
+            return new SuccessSignInDto(
+                user.getId(),
+                accessToken,
+                refreshToken,
+                user.getName(),
+                false);
+        } catch (Exception e) {
+            log.error("Google authentication failed", e);
+            throw new BadRequestException("Google authentication failed: " + e.getMessage());
+        }
     }
 }

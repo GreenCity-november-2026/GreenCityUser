@@ -1,5 +1,6 @@
 package greencity.security.service;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import greencity.TestConst;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -92,6 +93,9 @@ class OwnSecurityServiceImplTest {
     @Mock
     EmailService emailService;
 
+    @Mock
+    private GoogleIdTokenVerifier googleIdTokenVerifier;
+
     private OwnSecurityService ownSecurityService;
 
     private UserVO verifiedUser;
@@ -105,7 +109,7 @@ class OwnSecurityServiceImplTest {
         initMocks(this);
         ownSecurityService = new OwnSecurityServiceImpl(ownSecurityRepo, userService, passwordEncoder,
             jwtTool, 1, restorePasswordEmailRepo, modelMapper,
-            userRepo, emailService);
+            userRepo, emailService, googleIdTokenVerifier);
 
         verifiedUser = UserVO.builder()
             .email("test@gmail.com")

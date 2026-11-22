@@ -274,4 +274,23 @@ public class OwnSecurityController {
         service.setPassword(dto, email);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    /**
+     * Method for sign-in/sign-up via Google.
+     *
+     * @param googleTokenDto - {@link GoogleTokenDto} with Google JWT token.
+     * @return {@link SuccessSignInDto}
+     */
+    @Operation(summary = "Sign-in/sign-up via Google")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = HttpStatuses.OK,
+            content = @Content(schema = @Schema(implementation = SuccessSignInDto.class))),
+        @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST)
+    })
+    @PostMapping("/googleSecurity")
+    public ResponseEntity<SuccessSignInDto> googleSecurity(
+        @Valid @RequestBody GoogleTokenDto googleTokenDto) {
+        return ResponseEntity.ok(service.signInWithGoogle(googleTokenDto.getToken()));
+    }
+
 }

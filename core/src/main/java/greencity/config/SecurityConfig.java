@@ -128,7 +128,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST,
                     "/ownSecurity/signUp",
                     "/ownSecurity/signIn",
-                    "/ownSecurity/updatePassword")
+                    "/ownSecurity/updatePassword",
+                    "/ownSecurity/googleSecurity")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, USER_LINK,
                     "/user/shopping-list-items/habits/{habitId}/shopping-list",
