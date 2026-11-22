@@ -292,5 +292,4 @@ public class OwnSecurityController {
         @Valid @RequestBody GoogleTokenDto googleTokenDto) {
         return ResponseEntity.ok(service.signInWithGoogle(googleTokenDto.getToken()));
     }
-
 }
